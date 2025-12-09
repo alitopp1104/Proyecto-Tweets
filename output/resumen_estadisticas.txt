@@ -1,0 +1,5 @@
+CONTEO POR SENTIMIENTO:
+{Irrelevant=12990, Neutral=18318, Negative=22542, Positive=20832}
+
+PROMEDIO DE LONGITUD (positive):
+91.4161386328725
