@@ -6,6 +6,7 @@ package app;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -25,39 +26,56 @@ public class Main {
 
         // SUPPLIER desde TweetLoader 
         TweetLoader loader = new TweetLoader();
-        Supplier<List<Tweet>> lectorTweets = loader.crearLectorTweets("data/twitters.csv");
+        Supplier<List<Tweet>> lectorTweets =
+                loader.crearLectorTweets("data/twitters.csv");
 
         // Servicios
         TextTransformService transformService = new TextTransformService();
         TweetAnalyticsService analyticsService = new TweetAnalyticsService();
         ReportGenerator reportGenerator = new ReportGenerator();
 
-        // Transformación 
+        // TRANSFORMACIÓN (Function)
         Function<Tweet, Tweet> transformacionCompleta
                 = transformService.sinMenciones
                         .andThen(transformService.sinHashtags)
                         .andThen(transformService.sinEspaciosExtra)
                         .andThen(transformService.aMayusculas);
 
-        // Consumer 
-        Consumer<Tweet> accionFinal = transformService.accionFinal;
+      
 
         // RUNNABLE PRINCIPAL
         Runnable pipelinePrincipal = () -> {
 
-            //️Cargar tweets
+            //  Cargar tweets (Supplier)
             List<Tweet> tweets = lectorTweets.get();
 
-            // Transformar tweets 
-            List<Tweet> tweetsLimpios = transformService.transformarTweets(tweets, transformacionCompleta);
+            //  Transformar tweets (Function)
+            List<Tweet> tweetsLimpios =
+                    transformService.transformarTweets(tweets, transformacionCompleta);
 
-            //  Procesar tweets 
-            transformService.procesarTweets(tweets, transformacionCompleta, accionFinal);
+            // Procesar tweets (Consumer)
+            transformService.procesarTweets(tweets, transformacionCompleta);
+
+            //  UBinaryOperator
+            Optional<Tweet> tweetUnido = tweetsLimpios.stream()
+                    .filter(t -> t.getSentimiento().equalsIgnoreCase("positive"))
+                    .reduce(transformService.unirTweets);
+
+            tweetUnido.ifPresent(t -> {
+                System.out.println("\nTWEET RESULTANTE DEL BinaryOperator:");
+                System.out.println(t);
+                
+                reportGenerator.guardarTweetCombinado(
+            t, "output/tweet_combinado.csv"
+    );
+            });
 
             //  Análisis estadístico
-            Map<String, Long> conteo = analyticsService.contarTweetsPorSentimiento(tweetsLimpios);
+            Map<String, Long> conteo =
+                    analyticsService.contarTweetsPorSentimiento(tweetsLimpios);
 
-            double promedioPositivos = analyticsService.calcularPromedioLongitud(tweetsLimpios, "positive");
+            double promedioPositivos =
+                    analyticsService.calcularPromedioLongitud(tweetsLimpios, "positive");
 
             //  Crear resumen
             String resumen = "CONTEO POR SENTIMIENTO:\n"
@@ -66,12 +84,13 @@ public class Main {
                     + promedioPositivos;
 
             //  Guardar archivos
-            
-            reportGenerator.guardarTweetsLimpios(tweetsLimpios, "output/tweets_limpios.csv");
+            reportGenerator.guardarTweetsLimpios(
+                    tweetsLimpios, "output/tweets_limpios.csv");
 
-            reportGenerator.guardarResumenEstadisticas(resumen,"output/resumen_estadisticas.txt");
+            reportGenerator.guardarResumenEstadisticas(
+                    resumen, "output/resumen_estadisticas.txt");
 
-            System.out.println("PROCESAMIENTO FINALIZADO");
+            System.out.println("\nPROCESAMIENTO FINALIZADO");
         };
 
         // EJECUCIÓN DEL RUNNABLE

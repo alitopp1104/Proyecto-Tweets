@@ -28,19 +28,39 @@ public class ReportGenerator {
 }
 
 
-    public void guardarTweetsLimpios(List<Tweet> tweets, String rutaSalida) {
+public void guardarTweetsLimpios(List<Tweet> tweets, String rutaSalida) {
+
+    try {
+        // 🔹 Crear carpetas si no existen
+        Path ruta = Path.of(rutaSalida);
+        Files.createDirectories(ruta.getParent());
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(rutaSalida))) {
+            tweets.forEach(t -> {
+                String linea = t.getId() + "," +
+                               t.getEntidad() + "," +
+                               t.getSentimiento() + "," +
+                               escaparCSV(t.getContenido());
+
+                writer.println(linea);
+            });
+        }
+
+    } catch (IOException e) {
+        throw new UncheckedIOException(e);
+    }
+}
+
+public void guardarTweetCombinado(Tweet tweet, String rutaSalida) {
 
     try (PrintWriter writer = new PrintWriter(new FileWriter(rutaSalida))) {
 
-        tweets.forEach(t -> {
+        String linea = tweet.getId() + "," +
+                       tweet.getEntidad() + "," +
+                       tweet.getSentimiento() + "," +
+                       escaparCSV(tweet.getContenido());
 
-            String linea = t.getId() + "," +
-                           t.getEntidad() + "," +
-                           t.getSentimiento() + "," +
-                           escaparCSV(t.getContenido());
-
-            writer.println(linea);
-        });
+        writer.println(linea);
 
     } catch (IOException e) {
         throw new UncheckedIOException(e);

@@ -25,7 +25,7 @@ public class TweetAnalyticsService {
   public Map<String, Long> contarTweetsPorSentimiento(List<Tweet> tweets) {
 
     return tweets.stream()
-            .collect(Collectors.groupingBy(
+            .collect(Collectors.groupingBy( //mapa c v
                     t -> t.getSentimiento(),  
                     Collectors.counting()
             ));
